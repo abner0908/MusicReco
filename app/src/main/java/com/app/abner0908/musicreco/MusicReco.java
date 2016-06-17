@@ -19,6 +19,15 @@ import com.spotify.sdk.android.player.PlayerNotificationCallback;
 import com.spotify.sdk.android.player.PlayerState;
 import com.spotify.sdk.android.player.Spotify;
 
+import kaaes.spotify.webapi.android.SpotifyApi;
+import kaaes.spotify.webapi.android.SpotifyService;
+import kaaes.spotify.webapi.android.models.Album;
+import kaaes.spotify.webapi.android.models.Pager;
+import kaaes.spotify.webapi.android.models.TrackSimple;
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
+
 public class MusicReco extends AppCompatActivity implements
         PlayerNotificationCallback, ConnectionStateCallback {
 
@@ -27,10 +36,13 @@ public class MusicReco extends AppCompatActivity implements
     // TODO: Replace with your redirect URI
     private static final String REDIRECT_URI = "spotify-login-for-nextmusic://callback";
     private static final int REQUEST_CODE = 1337;
-    public static final String LOG_TAG = MusicReco.class.getSimpleName();;
+    public static final String LOG_TAG = MusicReco.class.getSimpleName();
+    ;
     private boolean isStart = false;
     private boolean isPlay = false;
-    private Player mPlayer;
+    private Player mPlayer = null;
+    private String mAccessToken = null;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,39 +60,65 @@ public class MusicReco extends AppCompatActivity implements
 
         AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
         final FloatingActionButton fab_play = (FloatingActionButton) findViewById(R.id.fab_play);
+        if (fab_play == null)
+            return;
         fab_play.setOnClickListener(new View.OnClickListener() {
-                                        @Override
-                                        public void onClick(View v) {
-                                            if (mPlayer == null)
-                                                return;
+            @Override
+            public void onClick(View v) {
+                handlePlay(fab_play);
+            }
+        });
+    }
 
-                                            if (!isStart) {
-                                                mPlayer.play("spotify:track:2TpxZ7JUBn3uw46aR7qd6V");
-                                                fab_play.setImageResource(android.R.drawable.ic_media_pause);
-                                                isPlay = !isPlay;
-                                                isStart = !isStart;
-                                                Log.d(LOG_TAG, "A new song is played");
-                                            }
+    private void getTracksFromAlbum() {
+        if (mAccessToken == null) {
+            Log.d(LOG_TAG, "the access Token donn't exist.");
+            return;
+        }
+        SpotifyApi api = new SpotifyApi();
+        api.setAccessToken(mAccessToken);
+        SpotifyService service = api.getService();
+        service.getAlbum("2E2qx9yrlw5VjWquzZ25vy", new Callback<Album>() {
+            @Override
+            public void success(Album album, Response response) {
+                Log.d("Album success", album.name);
+                Pager<TrackSimple> tracks = album.tracks;
+                for (TrackSimple track : tracks.items) {
+                    Log.d("Album success", "track: " + track.name + " ,id: " + track.id);
+                }
+            }
 
-                                            if (isStart) {
-                                                if (isPlay) {
-                                                    mPlayer.pause();
-                                                    fab_play.setImageResource(android.R.drawable.ic_media_play);
-                                                    isPlay = !isPlay;
-                                                    Log.d(LOG_TAG, "The Music is paused");
-                                                } else {
-                                                    mPlayer.resume();
-                                                    fab_play.setImageResource(android.R.drawable.ic_media_pause);
-                                                    isPlay = !isPlay;
-                                                    Log.d(LOG_TAG, "The Music is resumed");
-                                                }
-                                            }
-                                        }
+            @Override
+            public void failure(RetrofitError error) {
+                Log.d("Album failure", error.toString());
+            }
+        });
+    }
 
-                                    }
+    private void handlePlay(FloatingActionButton fab_play) {
+        if (mPlayer == null)
+            return;
+        if (!isStart) {
+            mPlayer.play("spotify:track:2TpxZ7JUBn3uw46aR7qd6V");
+            fab_play.setImageResource(android.R.drawable.ic_media_pause);
+            isPlay = !isPlay;
+            isStart = !isStart;
+            Log.d(LOG_TAG, "A new song is played");
+        }
 
-        );
-
+        if (isStart) {
+            if (isPlay) {
+                mPlayer.pause();
+                fab_play.setImageResource(android.R.drawable.ic_media_play);
+                isPlay = !isPlay;
+                Log.d(LOG_TAG, "The Music is paused");
+            } else {
+                mPlayer.resume();
+                fab_play.setImageResource(android.R.drawable.ic_media_pause);
+                isPlay = !isPlay;
+                Log.d(LOG_TAG, "The Music is resumed");
+            }
+        }
     }
 
     @Override
@@ -90,6 +128,7 @@ public class MusicReco extends AppCompatActivity implements
         // Check if result comes from the correct activity
         if (requestCode == REQUEST_CODE) {
             AuthenticationResponse response = AuthenticationClient.getResponse(resultCode, intent);
+            mAccessToken = response.getAccessToken();
             if (response.getType() == AuthenticationResponse.Type.TOKEN) {
                 Config playerConfig = new Config(this, response.getAccessToken(), CLIENT_ID);
                 Spotify.getPlayer(playerConfig, this, new Player.InitializationObserver() {
