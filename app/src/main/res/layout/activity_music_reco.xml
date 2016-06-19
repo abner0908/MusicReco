@@ -5,24 +5,29 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/dark_grey"
     android:fitsSystemWindows="true"
-    tools:context="com.app.abner0908.musicreco.MusicReco">
+    tools:context=".MusicRecoActivity">
 
-    <android.support.design.widget.AppBarLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:theme="@style/AppTheme.AppBarOverlay">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar"
+        <ImageView
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
-            app:popupTheme="@style/AppTheme.PopupOverlay"/>
+            android:layout_height="60dp"
+            android:background="@color/green"/>
 
-    </android.support.design.widget.AppBarLayout>
-
-    <include layout="@layout/content_music_reco"/>
+        <ListView
+            android:id="@+id/tracks_list_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            tools:listitem="@layout/tracks_row"
+            />
+    </LinearLayout>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab_play"
@@ -30,9 +35,9 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="@dimen/fab_margin"
-        android:src="@android:drawable/ic_media_play"
-        android:clickable="true"
         android:baselineAlignBottom="false"
-        android:scaleType="centerCrop"/>
+        android:clickable="true"
+        android:scaleType="centerCrop"
+        android:src="@android:drawable/ic_media_play"/>
 
 </android.support.design.widget.CoordinatorLayout>
